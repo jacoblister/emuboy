@@ -1,6 +1,6 @@
 # Emu Boy Development Blog
 
-![reference image](emu.png)
+![reference image](img/emu.png)
 
 Emu Boy is a Game Boy emulator in TypeScript.  This blog details the journey of creating it, and hopefully inspires others to try writing an emulator, as it's a very satisfying experience when it comes together.
 
@@ -23,7 +23,7 @@ As for chosing a system to emulate, for a number of reasons the Game Boy was a g
 
 The Major Componenets in the project follow the hardware as much as possible.  This mostly worked out pretty well 
 
-![reference image](gb-hardware.png)
+![reference image](img/gb-hardware.png)
 
 # Development Steps
 
@@ -60,7 +60,7 @@ Lets move on
 
 ## PPU (Round 1)
 
-<img src="tiledata.png" width="320">
+![reference image](img/tiledata.png)
 
 The very first feature I implemented was a reader for the PPU tile data.  This consisted of about a page of code which could read a copy of video RAM, and write the tile data graphics out to an image buffer.  The format is described here:
 
@@ -68,7 +68,7 @@ https://gbdev.io/pandocs/Tile_Data.html
 
 As a follow up, I implemented the tile map, which allows tiles to be selected to display a full image on the LCD output:
 
-<img src="tilemap.png" width="320">
+![reference image](img/tilemap.png)
 
 https://gbdev.io/pandocs/Tile_Maps.html
 
@@ -154,7 +154,7 @@ The source code for this is only about a page long, and it simply copies some pr
 
 This can, of course, run on the real hardware:
 
-![reference image](gb-helloworld.png)
+![reference image](img/gb-helloworld.png)
 
 As this simple example only uses about a dozen instructions, implementing each one in the emulated CPU is enough to get it running.
 
@@ -215,7 +215,7 @@ The Hello World example used only about a dozen instructions, but the Z80 core i
 
 https://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html
 
-![reference image](opcodes.png)
+![reference image](img/opcodes.png)
 
 Filling out this table is one of the most involved tasks of getting an emulator to work correctly, as these need to be 100% correct to get software running.  If there are faults in the implemenation, tracking them down when running game ROMs can very tedious.
 
@@ -290,7 +290,7 @@ Fortunaly, there is a nice small self contained test, which covers most features
 
 https://github.com/mattcurrie/dmg-acid2
 
-![reference image](reference-dmg.png)
+![reference image](img/reference-dmg.png)
 
 Once this is working and displaying correctly, most software will run OK.
 
@@ -308,9 +308,9 @@ It is however easy to implement.  Ideally this would be another component module
 
 At this point, simple 32k ROMs like the Tetris, the Game Boy Launch title are playable:
 
-![reference image](tetris-title.png) ![reference image](tetris-game.png)
+![reference image](img/tetris-title.png) ![reference image](img/tetris-game.png)
 
-![reference image](volley-title.png) ![reference image](volley-map.png) ![reference image](volley-game.png)
+![reference image](img/volley-title.png) ![reference image](img/volley-map.png) ![reference image](img/volley-game.png)
 
 # APU (Audio)
 
@@ -382,11 +382,11 @@ This is fairly easy to implement in the mapper, and most ROMs run just fine in t
 
 At this point, the emulator can play some popular titles:
 
-![reference image](pokemon-title.png) ![reference image](pokemon-battle.png)
+![reference image](img/pokemon-title.png) ![reference image](img/pokemon-battle.png)
 
-![reference image](link-intro.png) ![reference image](link-title.png) ![reference image](link-game.png)
+![reference image](img/link-intro.png) ![reference image](img/link-title.png) ![reference image](img/link-game.png)
 
-![reference image](metroid-title.png) ![reference image](metroid-game.png)
+![reference image](img/metroid-title.png) ![reference image](img/metroid-game.png)
 
 # Compatibilty
 
@@ -400,7 +400,7 @@ This includes some well known tourture tests, such as the following:
 
 https://eldred.fr/blog/prehistorik/
 
-![reference image](prehistoric-title.png) ![reference image](prehistoric-game.png)
+![reference image](img/prehistoric-title.png) ![reference image](img/prehistoric-game.png)
 
 The Audio still isn't quite right though - implementing zombie envelopes for the one title I could found that used them felt like a step too far for me.
 
