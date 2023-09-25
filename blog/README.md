@@ -14,6 +14,7 @@ There are a couple of preloaded images here found freely available on the intern
 
 * It's fairly bare bones at the moment - the browser based sound needs a bit of work
 * Try running on a desktop, rather than mobile phone for best results
+* Some optimisation still todo, so needs a fairly fast PC for the browser version right now
 
 # Introduction and Motiviation
 
