@@ -3,7 +3,7 @@ Emu Boy is a Game Boy emulator in TypeScript
 
 See the [Blog](/blog/README.md) for info on how this was put together.
 
-Check out the live demo [here] https://jacoblister.github.io/emuboy
+Check out the live demo https://jacoblister.github.io/emuboy
 
 # Building
 

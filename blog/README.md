@@ -6,6 +6,10 @@ Emu Boy is a Game Boy emulator in TypeScript.  This blog details the journey of 
 
 It will also list approaches and resources which prove the most useful as we go along.
 
+# Demo
+
+Check out the live demo here https://jacoblister.github.io/emuboy
+
 # Introduction and Motiviation
 
 I'm been working on a implementing a compiler recently, and have got it to the point where it can parse a subset of TypeScript useful enough to write real programs.  The compiler currently has backends to generate C/C++ and JavaScript as outputs, and I've got plans to extend this to WebAssembly, x86/64 and ARM, and make it fully self hosted.
