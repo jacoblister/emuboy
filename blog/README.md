@@ -19,6 +19,32 @@ As for chosing a system to emulate, for a number of reasons the Game Boy was a g
 * It is a very simple system, without any secondary supporting or legacy chips in it to worry about.
 * Console systems of the era often extended functionality by using coprocessors and peripherals in the game cartridges.  Beyond fairly standardised memory bank swiching, Game Boy didn't do this much, meaning a simple emulator should be able to run the majority of software without issues.
 
+# TypeScript
+
+TypeScript is JavaScript with static types
+
+So for example, here's a simple function in JavaScript
+
+```
+function add(a, b) {
+    return a + b
+}
+```
+
+And in TypeScript with types:
+
+```
+function add(a: i32, b: i32): i32 {
+    return a + b
+}
+```
+
+* TypeScript has many features, but Emu Boy just uses the static typing.  This allows it to be compiled to for example C++, as well as JavaScript
+* To compile to JavaScript, the code remains basically the same, but the type definitions are removed.
+* Emu Boy largely follows the AssemblyScript TypeScript dialect:
+https://www.assemblyscript.org/
+
+
 # Major Components
 
 The Major Componenets in the project follow the hardware as much as possible.  This mostly worked out pretty well 
@@ -30,6 +56,22 @@ The Major Componenets in the project follow the hardware as much as possible.  T
 ## First Steps & Base Project
 
 The first step was creating a base data structure to hold to major componets of the project.  These mostly follow the Major Components section above, and attempt to limit any cross dependencies as much as possible.
+
+
+```mermaid
+classDiagram
+   CPU       --> Mapper : Read/Write
+   Mapper    --> ROM
+   Mapper    --> RAM
+   Mapper    --> Timer
+   Mapper    --> JoyPad
+   Mapper    --> PPU
+   Mapper    --> APU
+   Timer     --> Interrupt
+   PPU       --> Interrupt
+   JoyPad    --> Interrupt
+   Interrupt --> CPU : Request
+```
 
 ```
 class GameBoy {
@@ -93,14 +135,33 @@ https://gbdev.io/pandocs/Memory_Map.html
 For the emulator, this keeps a clean sepration of the CPU from the other components, and the address bus mapper (and interrupt line - more on that later) are components passed in as dependencies, and the only components the CPU directly interacts with.
 
 
+```mermaid
+stateDiagram-v2
+   CPU --> Mapper
+   Mapper --> ROM
+   Mapper --> RAM
+   Mapper --> Timer
+   Mapper --> JoyPad
+   Mapper --> PPU
+   Mapper --> APU
 ```
 
-  Mapper/Bus  -----+--------+--------+--------+--------+------
-                   |        |        |        |        | 
-                +-----+  +-----+  +-----+  +-----+  +-----+
-                | CPU |  | ROM |  | RAM |  | ROM |  | PPU |
-                +-----+  +-----+  +-----+  +-----+  +-----+
-```
+
+| Start | End    | Component | Description                      | 
+|-------|--------|-----------|----------------------------------|
+|`0000` | `3FFF` | ROM       | 16 KiB ROM bank 00               |
+|`4000` | `7FFF` | ROM       | 16 KiB ROM Bank 01~NN            |
+|`8000` | `9FFF` | PPU       | 8 KiB Video RAM (VRAM)           |
+|`A000` | `BFFF` | RAM       | 8 KiB External RAM               |
+|`C000` | `CFFF` | RAM       | 4 KiB Work RAM (WRAM)            |
+|`D000` | `DFFF` | RAM       | 4 KiB Work RAM (WRAM)            |
+|`E000` | `FDFF` | -         | Mirror of C000~DDFF (Echo RAM)   |
+|`FE00` | `FE9F` | PPU       | Object attribute memory (OAM)    |
+|`FEA0` | `FEFF` | -         | Not Usable                       |
+|`FF00` | `FF7F` | Various   | I/O Registers                    |
+|`FF80` | `FFFE` | CPU       | High RAM (HRAM)                  | 
+|`FFFF` | `FFFF` | CPU       | Interrupt Enable register (IE)   |
+
 
 So in code, our mapper looks like this.  It's very similar to the top level project, as it needs to access basically all the components in the system:
 
@@ -125,11 +186,48 @@ Now time to start building the CPU.  The CPU in the Game Boy is a modified Z80 c
 
 https://gbdev.io/pandocs/CPU_Registers_and_Flags.html 
 
+
+### Registers
+
+| 16-bit | Hi  | Lo  | Name/Function           |
+|--------|-----|-----|-------------------------|
+|`AF`    | `A` | `F` | Accumulator & Flags     |
+|`BC`    | `B` | `C` | BC                      |
+|`DE`    | `D` | `E` | DE                      |
+|`HL`    | `H` | `L` | HL                      |
+|`SP`    | `-` | `-` | Stack Pointer           |
+|`PC`    | `-` | `-` | Program Counter/Pointer |
+
+### Flags
+
+| Bit | Name | Explanation            |
+|-----|------|------------------------|
+|`7`  | `Z`  | Zero flag              |
+|`6`  | `N`  | Subtraction flag (BCD) |
+|`5`  | `H`  | Half Carry flag (BCD)  |
+|`4`  | `C`  | Carry flag             |
+
+
 In realitiy this is not a complete description of how every instruction works, but it's easy enough to look up the instructions in the source code of another working emulator, and follow along with what they do.
 
 CPU Registers are simply stored as numbers:
 
 ```
+let _B: int = 0
+let _C: int = 1
+let _D: int = 2
+let _E: int = 3
+let _H: int = 4
+let _L: int = 5
+let _F: int = 6
+let _A: int = 7
+let _HL: int = _F
+
+let FLAG_Z: int = (1 << 7)
+let FLAG_N: int = (1 << 6)
+let FLAG_H: int = (1 << 5)
+let FLAG_C: int = (1 << 4)
+
 class CPU {
     REG: int[]
     SP: int
@@ -139,10 +237,6 @@ class CPU {
 ```
 
 registers are shorted in the REG array, there are 6 of them, plus the stack point SP and program counter PC
-
-```
-F, A, C, D, H, L  and SP, PC
-```
 
 Storing the registers as an array makes is easier to write instruction handlers which perform the same operation on different registers, as an index into the array can be used to address the register.
 
@@ -183,6 +277,15 @@ The instruction handler is:
 if (op == 0x3E) { // LD a, d8
     this.REG[_A] = this.mapper.read(this.PC)
     this.PC = (this.PC + 1) & 0xFFFF
+}
+```
+
+Here is the mapper code, as in this example when reading from RAM:
+
+```
+read(addr: int): int {
+    ...
+    if (addr >= 0xC000 && addr < 0xE000) { return this.ram.WRAM[addr - 0xC000] }
 }
 ```
 
@@ -264,15 +367,26 @@ This can be due to the fact the the PPU operates as a continuiosuly cycling stat
 
 https://gbdev.io/pandocs/pixel_fifo.html
 
+```mermaid
+stateDiagram-v2
+    OAMScan    --> DrawPixels
+    DrawPixels --> HBlank
+    HBlank     --> OAMScan
+    HBlank     --> VBlank
+    VBlank     --> OAMScan
 ```
-  +----------+----------------+------------------+
-  | OAM Scan | Drawing Pixels | Horizontal Blank |
-  +----------------------------------------------+
-  | ...      | ...            | ...              |
-  +----------------------------------------------+
-  | Vertical Blank                               |
-  +----------------------------------------------+
-```
+
+| Line | Phase             |                   |                      |
+|------|-------------------|-------------------|----------------------|
+|`0`   | `2`OAM Scan       | `3`Drawing Pixels | `0`Horizontal Blank  |
+|`1`   | `2`OAM Scan       | `3`Drawing Pixels | `0`Horizontal Blank  |
+|`2`   | `2`OAM Scan       | `3`Drawing Pixels | `0`Horizontal Blank  |
+|...   |                   |                   |                      |
+|`143` | `2`OAM Scan       | `3`Drawing Pixels | `0`Horizontal Blank  |
+|`144` | `1`Vertical Blank |                   |                      |
+|...   |                   |                   |                      |
+|`153` | `1`Vertical Blank |                   |                      |
+
 
 This needs to be simulated by the emulated PPU, in particular updating the PPU state and raising the Vertical Blank interrupt on completing a frame of video, as most software relies on this.
 
@@ -290,7 +404,7 @@ Fortunaly, there is a nice small self contained test, which covers most features
 
 https://github.com/mattcurrie/dmg-acid2
 
-![reference image](img/reference-dmg.png)
+![reference image](imf/reference-dmg.png)
 
 Once this is working and displaying correctly, most software will run OK.
 
