@@ -1,0 +1,12 @@
+{
+    "scripts": {
+        "clean": "rm -f src/*.js",
+        "build": "npx tsc --target esnext src/global.d.ts src/gameboy.ts && rollup src/gameboy.js --file build/gameboy.js",
+        "serve": "npx http-server build"
+    },
+    "dependencies": {
+        "http-server": "^14.1.1",
+        "rollup": "^3.29.3",
+        "typescript": "^5.2.2"
+    }
+}
