@@ -12,6 +12,9 @@ Check out the live demo here https://jacoblister.github.io/emuboy
 
 There are a couple of preloaded images here found freely available on the internet, sourced from this site https://hh.gbdev.io
 
+* It's fairly bare bones at the moment - the browser based sound needs a bit of work
+* Try running on a desktop, rather than mobile phone for best results
+
 # Introduction and Motiviation
 
 I'm been working on a implementing a compiler recently, and have got it to the point where it can parse a subset of TypeScript useful enough to write real programs.  The compiler currently has backends to generate C/C++ and JavaScript as outputs, and I've got plans to extend this to WebAssembly, x86/64 and ARM, and make it fully self hosted.
