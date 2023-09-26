@@ -414,7 +414,7 @@ Fortunaly, there is a nice small self contained test, which covers most features
 
 https://github.com/mattcurrie/dmg-acid2
 
-![reference image](imf/reference-dmg.png)
+![reference image](img/reference-dmg.png)
 
 Once this is working and displaying correctly, most software will run OK.
 
