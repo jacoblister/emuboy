@@ -48,6 +48,7 @@ class PPU {
         this.LCDC = 0x91
         this.STAT = 0x81
         this.LY = 0x91
+        this.LYC = 0
         this.SCY = 0
         this.SCX = 0
         this.WY = 0
@@ -60,6 +61,9 @@ class PPU {
 
         this.ticks = 216
         this.frame = 0
+
+        for (let i: int = 0; i < 0x2000; i = i + 1) { this.VRAM[i] = 0 }
+        for (let i: int = 0; i < 160; i = i + 1) { this.OAM[i] = 0 }
     }
 
     constructor(interrupt: interrupt.Interrupt) {

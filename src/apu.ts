@@ -255,6 +255,7 @@ class ChanNoise {
             this.on = 1
             this.vol = this.NR2 >> 4
             this.divEnv = this.NR2 & 7
+            this.LSFR = 0
         }
     }
 

@@ -84,13 +84,23 @@ class GameBoy {
         return this.ppu.frame
     }
 
-    advanceFrame(vBuffer: int[]) {
+    advanceFrame(vBuffer: int[], aSamples: int, aBuffer: float[]) {
+        let aIndex: int = 0
+        let aPos: int = 0
         this.ppu.vBuffer = vBuffer
 
-        // this.mockPPUscroll()
+        let volL: int = (this.apu.NR50 >> 4) & 7
+        if (volL == 0) { volL = 1 }
 
         while(this.ppu.frame == 0) {
             this.tick()
+
+            aPos = aPos + aSamples
+            if (aPos >= 70224) {
+                aBuffer[aIndex] = (this.apu.PCML * volL) * 0.001
+                aIndex = aIndex + 1
+                aPos = aPos - 70224
+            }
         }
         this.ppu.frame = 0
     }
@@ -100,4 +110,4 @@ class GameBoy {
     }
 }
 
-let dummyBoy = new GameBoy()
+let gb: GameBoy = new GameBoy()
