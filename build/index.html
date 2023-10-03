@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta name=viewport content="width=device-width, initial-scale=2">
-</head>    
 <body>
     <canvas id="glcanvas" width="160" height="144"></canvas><br/>
     <button id="pocket">Pocket Demo</button><br/>
@@ -20,9 +17,6 @@
     const ctx = canvas.getContext("2d")
     const DISPLAY_WIDTH = 160
     const DISPLAY_HEIGHT = 144
-
-    const imageData = ctx.createImageData(DISPLAY_WIDTH, DISPLAY_WIDTH)
-    vBuffer = new Uint32Array(imageData.data.buffer)
 
     let gameboy = new GameBoy()
 
@@ -52,32 +46,63 @@
         reader.readAsArrayBuffer(this.files[0]);
     }, false);
 
-    // let frameNumber = 0
-    // function frame(timestamp) {
-    //     frameNumber = frameNumber + 1
+    // document.getElementById('rom').addEventListener('change', function () {
+    //     var reader = new FileReader();
+    //     reader.onload = function () {
+    //         var arrayBuffer = this.result;
+    //         var uint8View = new Uint8Array(arrayBuffer);
+    //         console.log(arrayBuffer);
+    //         console.log(uint8View[0]);
+    //         gameboy.loadRom(uint8View)
+    //     }
+    //     reader.readAsArrayBuffer(this.files[0]);
+    // }, false);
 
-    //     gameboy.advanceFrame(vBuffer)
-    //     ctx.putImageData(imageData, 0, 0)
+    const imageData = ctx.createImageData(DISPLAY_WIDTH, DISPLAY_WIDTH)
+    vBuffer = new Uint32Array(imageData.data.buffer)
+    aBuffer = []
+    samplesPerFrame = 800
+    sampleCount = samplesPerFrame
 
-    //     window.requestAnimationFrame(frame)
-    // }
-    // window.requestAnimationFrame(frame)
+    let frameNumber = 0
+    let frameTimeStamp = 0
+    function frame(timestamp) {
+        nextFrameTimeStamp = performance.now()
+        let frameTime = nextFrameTimeStamp - frameTimeStamp
+        if (frameTime < 16 || frameTime > 18)
+        console.log('frame:', frameTime)
+        frameTimeStamp = nextFrameTimeStamp
+    
+        frameNumber = frameNumber + 1
+
+        buffer = []
+        gameboy.advanceFrame(vBuffer, sampleCount, buffer)
+        if (buffer.length == sampleCount) {
+            aBuffer = aBuffer.concat(buffer)
+        }
+
+        ctx.putImageData(imageData, 0, 0)
+
+        window.requestAnimationFrame(frame)
+    }
+    window.requestAnimationFrame(frame)
 
     window.onload = async function () {
         audioContext = new AudioContext();
+        samplesPerFrame = audioContext.sampleRate / 60
 
         console.log(document.getElementById("glcanvas"));
 
         // One-liner to resume playback when user interacted with the page.
-        // document.getElementById("glcanvas").addEventListener("click", function () {
-        //     audioContext.resume().then(() => {
-        //         console.log("Playback resumed successfully");
-        //     })
-        // })
+        document.getElementById("glcanvas").addEventListener("click", function () {
+            audioContext.resume().then(() => {
+                console.log("Playback resumed successfully");
+            })
+        })
 
-        var frameLength = 512
+        var frameLength = 2048
         gameboy.audioSampleRate = audioContext.sampleRate
-        console.log("start audio");
+        console.log("start audio: ", audioContext.sampleRate);
 
         var node = audioContext.createScriptProcessor(frameLength, 2, 2)
         node.onaudioprocess = function (event) {
@@ -88,16 +113,18 @@
 
             var output = event.outputBuffer.getChannelData(0)
 
-            let aBuffer = [0, 0]
             for (let i = 0; i < frameLength; i++) {
-                if (gameboy.advanceAudioSample(aBuffer)) {
-                    gameboy.setVBuffer(vBuffer)
-                    ctx.putImageData(imageData, 0, 0)
-                }
-                sampleBuffer[0][i] = aBuffer[0]
-                sampleBuffer[1][i] = aBuffer[1]
+                sampleBuffer[0][i] = aBuffer[i]
+                sampleBuffer[1][i] = aBuffer[i]
             }
-
+            aBuffer = aBuffer.slice(frameLength, aBuffer.length)
+            sampleCount = samplesPerFrame
+            if (aBuffer.length < frameLength >> 1) {
+                sampleCount = samplesPerFrame + 1
+            }
+            if (aBuffer.length > frameLength >> 1) {
+                sampleCount = samplesPerFrame - 1
+            }
             event.outputBuffer.copyToChannel(sampleBuffer[0], 0)
             event.outputBuffer.copyToChannel(sampleBuffer[1], 1)
         };
