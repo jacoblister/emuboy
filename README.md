@@ -1,4 +1,4 @@
-# Emu Boy Development Blog
+# Emu Boy
 
 ![reference image](img/emu.png)
 
