@@ -84,7 +84,7 @@ classDiagram
    Timer     --> Interrupt
    PPU       --> Interrupt
    JoyPad    --> Interrupt
-   Interrupt --> CPU : Request
+   Interrupt ..> CPU : Request
 ```
 
 ```
